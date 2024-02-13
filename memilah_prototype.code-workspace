@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "memilah_prototype",
+			"path": "."
+		},
+		{
+			"name": "espnow_test",
+			"path": "../../Test/espnow_test"
+		}
+	],
+	"settings": {}
+}
