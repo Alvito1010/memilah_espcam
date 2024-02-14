@@ -30,6 +30,7 @@ bool taskCompleted = false;
 unsigned long dataMillis = 0;
 
 String detectionResultString;
+bool objectDetected;
 
 
 const char* ntpServer = "pool.ntp.org";
@@ -174,9 +175,9 @@ void writeDataToFirebase() {
 }
 
 // Function to get data from Firebase Firestore
-void getDataFromFirebase() {
+void getObjectDetected() {
   String documentPath = "trash-bins/" + WiFi.macAddress();
-  String mask = "`detection-result`";
+  String mask = "objectDetected";
 
   if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), mask.c_str())) {
     Serial.println("Data fetched successfully.");
@@ -190,11 +191,11 @@ void getDataFromFirebase() {
       Serial.println(error.c_str());
     } else {
 
-      detectionResultString = doc["fields"]["detection-result"]["stringValue"].as<String>();
-      TrashType  = doc["fields"]["detection-result"]["stringValue"].as<String>();
+      objectDetected = doc["fields"]["objectDetected"]["boolValue"].as<bool>();
+      //TrashType  = doc["fields"]["detection-result"]["stringValue"].as<String>();
 
-      Serial.println("Detection result: ");
-      Serial.print(detectionResultString);
+      Serial.println("object Detected: ");
+      Serial.print(objectDetected);
     }
   } else {
     Serial.print("Failed to fetch data: ");
@@ -226,6 +227,12 @@ void shotAndSend() {
     capturePhotoSaveLittleFS();
     takeNewPhoto = false;
   }
+  while (objectDetected) {
+      // Wait until objectDetected becomes false
+      getObjectDetected();
+      delay(1000); // Adjust the delay based on your application's requirements
+    }
+
   delay(1);
   if (Firebase.ready()) {
     Serial.print("Uploading picture... ");
