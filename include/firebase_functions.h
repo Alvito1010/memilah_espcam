@@ -25,6 +25,7 @@ String TrashType;
 boolean takeNewPhoto;
 
 
+bool firestoreObjectDetected = false;
 bool taskCompleted = false;
 
 unsigned long dataMillis = 0;
@@ -227,7 +228,8 @@ void shotAndSend() {
     takeNewPhoto = false;
   }
   delay(1);
-  if (Firebase.ready()) {
+  if(!firestoreObjectDetected){
+    if (Firebase.ready()) {
     Serial.print("Uploading picture... ");
 
     if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID, getPhotoPath().c_str(), mem_storage_type_flash, getBucketPhoto().c_str(), "image/jpeg", fcsUploadCallback)) {
@@ -235,6 +237,7 @@ void shotAndSend() {
     } else {
       Serial.println(fbdo.errorReason());
     }
+  }
   }
   FirebaseJson content;
 
@@ -293,6 +296,35 @@ void resetObjectDetected(){ //setelah gerakin motor panggil function ini di func
     Serial.println("ok");
   else
     Serial.println(fbdo.errorReason());
+}
+
+void getResultObjectDetected() { //panggil di loop bagian awal2
+  String documentPath = "trash-bins/" + WiFi.macAddress();
+  String mask = "`objectDetected`";
+
+  if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), mask.c_str())) {
+    Serial.println("Data fetched successfully.");
+
+    // Parse the JSON data using ArduinoJson
+    DynamicJsonDocument doc(2048);  // Adjust the size according to your data
+    DeserializationError error = deserializeJson(doc, fbdo.payload());
+    
+
+    if (error) {
+      Serial.print("Failed to parse JSON data: ");
+      Serial.println(error.c_str());
+    } else {
+
+      firestoreObjectDetected  = doc["fields"]["objectDetected"]["booleanValue"].as<bool>();
+
+      Serial.print("Detected: ");
+      Serial.print(firestoreObjectDetected);
+
+    }
+  } else {
+    Serial.print("Failed to fetch data: ");
+    Serial.println(fbdo.errorReason());
+  }
 }
 
 void firebase_setup() {
